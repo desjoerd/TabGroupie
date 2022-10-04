@@ -1,0 +1,11 @@
+{
+  "name": "tabgroupie",
+  "scripts": {
+    "dev": "vite build --watch --sourcemap --minify false",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.193",
+    "vite": "^3.0.4"
+  }
+}
