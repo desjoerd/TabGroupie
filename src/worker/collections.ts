@@ -1,3 +1,7 @@
+export interface Predicate<T> {
+  (item: T): boolean;
+}
+
 export function groupBy<T, TKey>(
   collection: Iterable<T>,
   keySelector: (item: T) => TKey
@@ -37,10 +41,7 @@ export function first<T>(collection: Iterable<T>) {
   }
 }
 
-export function some<T>(
-  collection: Iterable<T>,
-  predicate: (value: T) => boolean
-) {
+export function some<T>(collection: Iterable<T>, predicate: Predicate<T>) {
   for (const item of collection) {
     if (predicate(item)) {
       return true;
@@ -58,6 +59,17 @@ export function* selectMany<T>(
 ): Generator<T> {
   for (const collection of collectionOfCollections) {
     for (const item of collection) {
+      yield item;
+    }
+  }
+}
+
+export function* filter<T>(
+  items: Iterable<T>,
+  predicate: Predicate<T>
+): Generator<T> {
+  for (const item of items) {
+    if (predicate(item)) {
       yield item;
     }
   }

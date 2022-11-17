@@ -1,11 +1,30 @@
 {
   "name": "tabgroupie",
   "scripts": {
-    "dev": "vite build --watch --sourcemap --minify false",
-    "build": "vite build"
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest"
   },
   "devDependencies": {
-    "@types/chrome": "^0.0.193",
-    "vite": "^3.0.4"
+    "@crxjs/vite-plugin": "1.0.14",
+    "@types/chrome": "^0.0.199",
+    "@types/react": "^18.0.21",
+    "@types/react-dom": "^18.0.6",
+    "@vitejs/plugin-react": "^2.1.0",
+    "typescript": "^4.8.4",
+    "vite": "^3.2.2",
+    "vitest": "^0.24.5"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@mui/icons-material": "^5.10.9",
+    "@mui/material": "^5.10.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-use": "^17.4.0"
+  },
+  "overrides": {
+    "vite": "$vite"
   }
 }

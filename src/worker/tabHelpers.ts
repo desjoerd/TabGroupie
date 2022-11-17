@@ -1,30 +1,35 @@
 import { TabTreeNode } from "./TabTreeNode";
 
+function compareByIndexAsc(left: TabInfo, right: TabInfo) {
+  return left.index - right.index;
+}
+
 export async function chromeGetAllTabinfos() {
   const chromeTabs = await chrome.tabs.query({});
-  return [...createTabInfos(chromeTabs)].sort(
-    (left, right) => left.tab.index - right.tab.index
-  );
+  return [...createTabInfos(chromeTabs)].sort(compareByIndexAsc);
 }
 
 export async function chromeTabsUngroup(tabs: TabInfo[]) {
   const tabIdsToUngroup = tabs
-    .filter((t) => t.tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE)
-    .map((t) => t.tabId);
+    .filter((t) => t.groupId !== undefined)
+    .map((t) => t.id);
 
   if (tabIdsToUngroup.length > 0) {
-    await chrome.tabs.ungroup(tabs.map((t) => t.tab.id!));
+    await chrome.tabs.ungroup(tabs.map((t) => t.id));
     for (const tab of tabs) {
-      tab.tab.groupId = chrome.tabGroups.TAB_GROUP_ID_NONE;
+      tab.groupId = undefined;
     }
   }
 }
 
-function getColor(group: TabTreeNode): chrome.tabGroups.ColorEnum | undefined {
-  if (group.urlParts.length < 2) {
+function getColor(
+  group: TabTreeNode<TabInfo>
+): chrome.tabGroups.ColorEnum | undefined {
+  const firstUrlPart = group.key.firstPart;
+  if (firstUrlPart === undefined) {
     return undefined;
   }
-  const domainParts = group.urlParts[1].split(".");
+  const domainParts = firstUrlPart.split(".");
   if (domainParts.length === 0) {
     return undefined;
   }
@@ -50,28 +55,13 @@ function getColor(group: TabTreeNode): chrome.tabGroups.ColorEnum | undefined {
   return colors[value % colors.length];
 }
 
-function getTitle(group: TabTreeNode) {
-  switch (group.urlParts.length) {
-    case 0:
-    case 1:
-      return "/";
-    case 2:
-      return group.urlParts[1];
-    case 3:
-    case 4:
-      return group.urlParts.join("");
-    default:
-      const domain = group.urlParts[1];
-      const beforeLast = group.urlParts[group.urlParts.length - 2];
-      const last = group.urlParts[group.urlParts.length - 1];
-
-      return [domain, "/..", beforeLast, last].join("");
-  }
+function getTitle(group: TabTreeNode<TabInfo>) {
+  return group.key.prettyString;
 }
 
 export async function chromeTabsGroup(
   windowId: number,
-  group: TabTreeNode,
+  group: TabTreeNode<TabInfo>,
   wantedGroupId?: number | undefined
 ) {
   let tabs = group.allTabs;
@@ -81,7 +71,7 @@ export async function chromeTabsGroup(
     wantedGroupId === chrome.tabs.TAB_ID_NONE
   ) {
     groupId = await chrome.tabs.group({
-      tabIds: tabs.map((t) => t.tabId),
+      tabIds: tabs.map((t) => t.id),
       groupId:
         wantedGroupId === undefined || wantedGroupId === chrome.tabs.TAB_ID_NONE
           ? undefined
@@ -90,9 +80,9 @@ export async function chromeTabsGroup(
         windowId,
       },
     });
-  } else if (tabs.some((t) => t.tab.groupId !== wantedGroupId)) {
+  } else if (tabs.some((t) => t.groupId !== wantedGroupId)) {
     groupId = await chrome.tabs.group({
-      tabIds: tabs.map((t) => t.tabId),
+      tabIds: tabs.map((t) => t.id),
       groupId: wantedGroupId,
     });
   } else {
@@ -100,7 +90,7 @@ export async function chromeTabsGroup(
   }
 
   for (const tab of tabs) {
-    tab.tab.groupId = groupId;
+    tab.groupId = groupId;
   }
 
   const tabGroup = await chrome.tabGroups.get(groupId);
@@ -116,9 +106,11 @@ export async function chromeTabsGroup(
 }
 
 export interface TabInfo {
-  tabId: number;
+  id: number;
   windowId: number;
-  tab: chrome.tabs.Tab;
+  groupId: number | undefined;
+  index: number;
+  active: boolean;
   url: URL;
   urlParts: string[];
 }
@@ -142,9 +134,11 @@ function* createTabInfos(tabs: chrome.tabs.Tab[]): Generator<TabInfo> {
     }
 
     yield {
-      tabId: tab.id,
+      id: tab.id,
+      groupId: tab.groupId,
       windowId: tab.windowId,
-      tab,
+      index: tab.index,
+      active: tab.active,
       url,
       urlParts: splitUrlInParts(url),
     };
@@ -182,20 +176,21 @@ function splitUrlInParts(url: URL) {
   }
 
   const pathNameParts = url.pathname
+    .toLowerCase()
     .split("/")
     .filter((pathPart) => pathPart !== "")
     .filter(
       (pathPart) => !/^\w\w-\w\w$/.test(pathPart) && !/^\w\w$/.test(pathPart)
     ) // remove culture info (e.g. en-US)
-    .map((pathPart, i) => `${i === 0 ? "/" : "/"}${pathPart}`.toLowerCase());
+    .map((pathPart) => `/${pathPart}`);
 
   const fragmentParts = url.hash
+    .toLowerCase()
     .split("/")
     .filter((pathPart) => pathPart !== "")
-    .map((pathPart, i) => `${i === 0 ? "/" : "/"}${pathPart}`.toLowerCase());
+    .map((pathPart) => `/${pathPart}`);
 
   return [
-    "",
     hostnameParts.join("."),
     ...hostnamePort,
     ...pathNameParts,

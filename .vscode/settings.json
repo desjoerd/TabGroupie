@@ -1,0 +1,4 @@
+{
+  "vitest.commandLine": "npm run test --",
+  "testing.automaticallyOpenPeekView": "never"
+}
