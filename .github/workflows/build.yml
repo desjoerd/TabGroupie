@@ -30,12 +30,8 @@ jobs:
       - name: 🏗️ Build
         run: npm run build
 
-      - name: 📦 Package
-        run: 7z a release/extension.zip -r ./dist/*
-
       - name: ⬆️ Upload extension artifact
         uses: actions/upload-artifact@v3
         with:
           name: extension
-          path: ./release/extension.zip
-          
+          path: ./dist/*
