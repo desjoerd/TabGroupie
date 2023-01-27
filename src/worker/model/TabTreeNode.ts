@@ -1,14 +1,14 @@
-import type { TabInfo } from "./tabHelpers";
 import { TabKey } from "./TabKey";
 
-export interface TabWithPartitionedUrl {
-  urlParts: string[];
+export interface TabWithTabKey {
+  key: TabKey;
 }
 
-export function createTabsTreeModel<TTab extends TabWithPartitionedUrl>(
-  tabs: TTab[]
+export function createTabsTreeModel<TTab extends TabWithTabKey>(
+  tabs: readonly TTab[]
 ): TabTreeNode<TTab> {
-  const tree = new TabTreeNode<TTab>();
+  const key = TabKey.getOverlappingKey(tabs.map((x) => x.key));
+  const tree = new TabTreeNode<TTab>(key);
 
   for (const tab of tabs) {
     tree.add(tab);
@@ -16,7 +16,7 @@ export function createTabsTreeModel<TTab extends TabWithPartitionedUrl>(
   return tree;
 }
 
-export class TabTreeNode<TTab extends TabWithPartitionedUrl> {
+export class TabTreeNode<TTab extends TabWithTabKey> {
   parent: TabTreeNode<TTab> | undefined;
   #items: TTab[];
   #totalCount: number;
@@ -24,15 +24,20 @@ export class TabTreeNode<TTab extends TabWithPartitionedUrl> {
   readonly key: TabKey;
 
   constructor();
+  constructor(key: TabKey);
   constructor(parent: TabTreeNode<TTab>, urlPart: string);
   constructor(
-    parent: TabTreeNode<TTab> | undefined = undefined,
+    parentOrKey: TabTreeNode<TTab> | TabKey | undefined = undefined,
     urlPart: string | undefined = "root"
   ) {
+    const parent = parentOrKey instanceof TabTreeNode ? parentOrKey : undefined;
+
     if (parent) {
       this.key = new TabKey(parent.key, urlPart);
+    } else if (parentOrKey instanceof TabKey) {
+      this.key = parentOrKey;
     } else {
-      this.key = new TabKey([]);
+      this.key = TabKey.empty;
     }
 
     this.#items = [];
@@ -53,8 +58,8 @@ export class TabTreeNode<TTab extends TabWithPartitionedUrl> {
 
   add(tab: TTab) {
     this.#totalCount++;
-    if (tab.urlParts.length > this.depth) {
-      const urlPart = tab.urlParts[this.depth];
+    if (tab.key.length > this.depth) {
+      const urlPart = tab.key.getPartAt(this.depth);
 
       let node = this.#children.get(urlPart);
       if (node === undefined) {
