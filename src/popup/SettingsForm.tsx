@@ -1,29 +1,19 @@
 import {
-  AppBar,
   Box,
-  Card,
-  Checkbox,
   Divider,
   FormControl,
-  FormControlLabel,
   FormGroup,
   FormHelperText,
-  Grid,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
-  SelectChangeEvent,
   Slider,
-  Switch,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Container, maxHeight, Stack } from "@mui/system";
+import { Stack } from "@mui/system";
 import { observer } from "mobx-react-lite";
 import { useSettings } from "./SettingsContext";
-import { usePrefersDarkMode } from "./usePrefersDarkMode";
 import { action, computed, makeObservable } from "mobx";
 
 let marks: { value: number; label: string }[] = [];
@@ -114,8 +104,8 @@ export const SettingsForm = observer(function SettingsForm() {
             label="Group location"
           >
             <MenuItem value="none">None</MenuItem>
-            <MenuItem value="top">Top</MenuItem>
-            <MenuItem value="bottom">Bottom</MenuItem>
+            <MenuItem value="top">Start</MenuItem>
+            <MenuItem value="bottom">End</MenuItem>
           </Select>
         </FormControl>
       </FormGroup>
@@ -140,9 +130,8 @@ export const SettingsForm = observer(function SettingsForm() {
           </Select>
           {settingsManager.settings.groupsLocation === "none" &&
             settingsManager.settings.sort === "groups" && (
-              <FormHelperText>
-                Sorting of groups requires a fixed group location (Top or
-                Bottom)
+              <FormHelperText color="warning">
+                Sorting of groups requires a fixed group location
               </FormHelperText>
             )}
         </FormControl>
