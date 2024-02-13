@@ -1,12 +1,27 @@
 {
   "$schema": "https://json.schemastore.org/chrome-manifest",
-  "name": "Tabgroupie",
+  "name": "TabGroupie",
   "version": "1.0",
   "manifest_version": 3,
+  "description": "TabGroupie: Your Browser's New Best Friend",
+  "homepage_url": "https://github.com/desjoerd/tabgroupie",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "background": {
     "service_worker": "src/worker/index.ts",
     "type": "module"
   },
-  "action": { "default_popup": "src/popup/index.html" },
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
   "permissions": ["tabs", "tabGroups", "storage"]
 }
